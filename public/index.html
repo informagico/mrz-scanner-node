@@ -1,0 +1,163 @@
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src='https://unpkg.com/tesseract.js@v2.0.0-beta.1/dist/tesseract.min.js'></script>
+	<script src="https://cdn.jsdelivr.net/npm/screw-filereader@1.4.3/index.min.js"></script>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+	</link>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css">
+	<style>
+		textarea {
+			background-color: rgba(0, 0, 0, 0.1);
+			color: white;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			border-radius: 5px;
+			color: black;
+			font-family: 'Courier New', Courier, monospace;
+			font-size: medium;
+		}
+	</style>
+</head>
+
+<body style="padding: 15px;">
+
+	<div class="container text-center">
+
+		<div class="row">
+			<div class="col">
+				<label class="btn btn-primary">
+					<i class="fa fa-image"></i> SNAP IT!<input id="input-image-show" type="file" name="sampleFile"
+						accept="image/*" capture="camera" style="display: none;" onchange="PreviewImage()">
+				</label>
+			</div>
+		</div>
+
+		<form ref='uploadForm' id="uploadForm" action="upload" method="post" enctype="multipart/form-data"
+			style="visibility: collapse;">
+			<input id="input-image" type="file" name="sampleFile" accept="image/*" capture="camera"
+				onchange="PreviewImage()">
+		</form>
+
+		<div class="row">
+			<div class="col">
+				<img id="doc-image" style="visibility: collapse; max-width: 75%;" src="" />
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col">
+				<img id="loading-image" src="assets/30.gif" style="visibility: hidden; width: 15%; margin: 10px;" />
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col">
+				<textarea id="document-content" rows="3" style="width: 100%;"></textarea>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<textarea id="document-parse" rows="10" style="width: 100%; margin-top: 10px;"></textarea>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		function FileListItem(a) {
+			a = [].slice.call(Array.isArray(a) ? a : arguments)
+			for (var c, b = c = a.length, d = !0; b-- && d;) d = a[b] instanceof File
+			if (!d) throw new TypeError("expected argument to FileList is File or array of File objects")
+			for (b = (new ClipboardEvent("")).clipboardData || new DataTransfer; c--;) b.items.add(a[c])
+			return b.files
+		}
+
+		function PreviewImage() {
+			document.getElementById('loading-image').style.setProperty('visibility', 'visible');
+
+			const file = document.getElementById("input-image-show").files[0]
+
+			if (!file) return
+
+			document.getElementById("input-image").files = document.getElementById("input-image-show").files
+
+			// set image to preview
+			var oFReader = new FileReader();
+			oFReader.readAsDataURL(document.getElementById("input-image").files[0]);
+
+			oFReader.onload = function (oFREvent) {
+				let docImg = document.getElementById("doc-image");
+				docImg.src = oFREvent.target.result;
+				docImg.style.setProperty('visibility', 'visible');
+			};
+
+			file.image().then(img => {
+				const canvas = document.createElement('canvas')
+				const ctx = canvas.getContext('2d')
+				const maxWidth = 1200
+				const maxHeight = 1200
+
+				// calculate new size
+				const ratio = Math.min(maxWidth / img.width, maxHeight / img.height)
+				const width = img.width * ratio + .5 | 0
+				const height = img.height * ratio + .5 | 0
+
+				// resize the canvas to the new dimensions
+				canvas.width = width
+				canvas.height = height
+
+				// scale & draw the image onto the canvas
+				ctx.drawImage(img, 0, 0, width, height)
+
+				// just to preview
+				//document.body.appendChild(canvas)
+
+				// Get the binary (aka blob)
+				canvas.toBlob(blob => {
+					const resizedFile = new File([blob], file.name, file)
+					const fileList = new FileListItem(resizedFile)
+
+					document.getElementById("input-image").files = fileList
+
+					uploadFile();
+				})
+			})
+		};
+	</script>
+	<script>
+		uploadFile = () => {
+			var vFD = new FormData(document.getElementById('uploadForm'));
+			var oXHR = new XMLHttpRequest();
+			oXHR.addEventListener('load', uploadFinish, false);
+			oXHR.addEventListener('error', uploadError, false);
+			oXHR.addEventListener('abort', uploadAbort, false);
+			oXHR.open('POST', 'upload');
+			oXHR.send(vFD);
+		}
+
+		function uploadFinish(e) { // upload successfully finished
+			document.getElementById('loading-image').style.setProperty('visibility', 'hidden');
+
+			if (e.target.status === 200) {
+				let r = JSON.parse(e.target.responseText);
+				document.getElementById('document-content').value = r.lines.join("\r\n");
+				document.getElementById('document-parse').value = JSON.stringify(r.result, null, 2);
+			} else if (e.target.status === 500) {
+				let r = JSON.parse(e.target.responseText);
+				alert("ERROR!\n" + r.result);
+			}
+		}
+		function uploadError(e) { // upload error
+			console.log('ERROR!')
+			console.log(e)
+			document.getElementById('loading-image').style.setProperty('visibility', 'hidden');
+		}
+		function uploadAbort(e) { // upload abort
+			console.log('ABORTED!')
+			console.log(e)
+			document.getElementById('loading-image').style.setProperty('visibility', 'hidden');
+		}
+	</script>
+</body>
+
+</html>

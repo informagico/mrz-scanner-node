@@ -1,0 +1,22 @@
+{
+	"name": "test-tesseract-2",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"start": "node src/app.js",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"enum": "^2.5.0",
+		"express": "^4.17.1",
+		"express-fileupload": "^1.1.6-alpha.6",
+		"mrz": "^3.1.0",
+		"tesseract.js": "^1.0.14"
+	},
+	"devDependencies": {
+		"nodemon": "^1.19.4"
+	}
+}
