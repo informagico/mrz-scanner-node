@@ -3,6 +3,7 @@ const express = require('express')
 const fileUpload = require('express-fileupload')
 const Tesseract = require('tesseract.js')
 const parse = require('mrz').parse
+const fs = require('fs')
 
 const app = express()
 
