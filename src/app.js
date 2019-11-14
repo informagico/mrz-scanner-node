@@ -18,7 +18,7 @@ app.post('/upload', async (req, res) => {
 	}
 
 	let sampleFile = req.files.sampleFile
-	if (!path.existsSync(path.join(__dirname, '../images'))) {
+	if (!fs.existsSync(path.join(__dirname, '../images'))) {
 		fs.mkdirSync(path.join(__dirname, '../images', 0744))
 	}
 	let imgPath = path.join(__dirname, '../images/image.jpg')
