@@ -62,9 +62,8 @@ app.post('/upload', async (req, res) => {
 				// check()
 
 				try {
-					parse(lines).then((result) => {
-						res.send({ status: 'success', lines, result })
-					})
+					let result = parse(lines)
+					res.send({ status: 'success', lines, result })
 				} catch (e) {
 					console.log(e.message)
 					res.status(500).send({ status: 'error', result: e.message })
